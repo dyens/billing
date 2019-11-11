@@ -71,7 +71,7 @@ class FailedReason(enum.Enum):
     UNKNOWN = enum.auto()
 
 
-# Table of transactions beetwetn wallets
+# Table of transactions beetween wallets
 transaction = Table(
     'transaction',
     metadata,
@@ -86,7 +86,7 @@ transaction = Table(
     Column('failed_reason', Enum(FailedReason)),
 )
 
-# Table of transactions beetwetn wallets
+# Transaction log table
 transaction_log = Table(
     'transaction_log',
     metadata,
