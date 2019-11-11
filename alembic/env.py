@@ -36,8 +36,8 @@ fileConfig(config.config_file_name)
 
 MODEL_PATH = Path(__file__).parent.parent
 sys.path.append(str(MODEL_PATH))
-from billing.db import Base
-target_metadata = Base.metadata
+from billing.db.models import metadata
+target_metadata = metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

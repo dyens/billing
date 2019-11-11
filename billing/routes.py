@@ -1,7 +1,8 @@
-import pathlib
+from aiohttp.web_app import Application
 
-from .views import index
+from billing.views import index
 
 
-def setup_routes(app):
+def setup_routes(app: Application) -> None:
+    """Add routes to app."""
     app.router.add_get('/', index.index)
