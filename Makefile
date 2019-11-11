@@ -1,4 +1,7 @@
-.PHONY: flake mypy pytest check deps stop-deps
+.PHONY: run flake mypy pytest check deps stop-deps
+
+run:
+	-poetry run python main.py
 
 flake:
 	-poetry run flake8 || true
