@@ -35,10 +35,10 @@ user = Table(
 class Currency(enum.Enum):
     """Available Currencies."""
 
-    USD = enum.auto()
-    EUR = enum.auto()
-    CAD = enum.auto()
-    CNY = enum.auto()
+    USD = 'USD'
+    EUR = 'EUR'
+    CAD = 'CAD'
+    CNY = 'CNY'
 
 
 # User wallet table
@@ -96,6 +96,33 @@ transaction_log = Table(
     Column('comment', Text),
     Column('created_at', DateTime, nullable=False, server_default=func.now()),
 )
+
+
+async def create_new_user(  # NOQA:WPS211
+    conn: PoolConnectionProxy,
+    *,
+    name: str,
+    country: str,
+    city: str,
+    currency: Currency,
+    balance: Decimal,
+) -> int:
+    """Create new user."""
+    async with conn.transaction():
+        create_user_query = user.insert().values(
+            name=name,
+            country=country,
+            city=city,
+        ).returning(user.c.id)
+        new_user_record = await conn.fetchrow(create_user_query)
+        new_user_id: int = new_user_record['id']
+        create_wallet_query = wallet.insert().values(
+            user_id=new_user_id,
+            balance=balance,
+            currency=currency,
+        )
+        await conn.execute(create_wallet_query)
+        return new_user_id
 
 
 async def get_users(conn: PoolConnectionProxy) -> str:

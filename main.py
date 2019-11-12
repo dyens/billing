@@ -1,5 +1,6 @@
 from aiohttp import web
 from aiohttp.web_app import Application
+from aiohttp_apispec import validation_middleware
 from dynaconf import settings
 
 from billing.db.setup import (
@@ -9,7 +10,7 @@ from billing.db.setup import (
 from billing.routes import setup_routes
 
 
-async def init_app() -> Application:
+def init_app() -> Application:
     """Init app."""
     app = web.Application()
     app.on_startup.append(init_pg)
@@ -17,6 +18,7 @@ async def init_app() -> Application:
 
     # setup views and routes
     setup_routes(app)
+    app.middlewares.append(validation_middleware)
     return app
 
 

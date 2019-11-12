@@ -1,15 +1,10 @@
 import pytest
-from aiohttp import web
 from dynaconf import settings
 from sqlalchemy import create_engine
 
 from billing.db.models import metadata
-from billing.db.setup import (
-    close_pg,
-    create_pool,
-    init_pg,
-)
-from billing.routes import setup_routes
+from billing.db.setup import create_pool
+from main import init_app
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -52,8 +47,5 @@ async def conn(pg_pool):
 @pytest.fixture
 def cli(loop, aiohttp_client, pg_database):
     """Aiohttp cli fixture."""
-    app = web.Application()
-    app.on_startup.append(init_pg)
-    app.on_cleanup.append(close_pg)
-    setup_routes(app)
+    app = init_app()
     return loop.run_until_complete(aiohttp_client(app))

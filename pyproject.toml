@@ -12,6 +12,8 @@ aiohttp = "^3.6.2"
 asyncpg = "^0.19.0"
 psycopg2 = "^2.8.4"
 asyncpgsa = "^0.26.1"
+aiohttp-apispec = "^2.0.0"
+marshmallow_enum = "^1.5.1"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.720.0"

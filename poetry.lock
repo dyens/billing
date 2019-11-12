@@ -18,6 +18,20 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 category = "main"
+description = "Build and document REST APIs with aiohttp and apispec"
+name = "aiohttp-apispec"
+optional = false
+python-versions = "*"
+version = "2.0.0"
+
+[package.dependencies]
+aiohttp = ">=3.0.1"
+apispec = ">=3.0.0"
+jinja2 = "*"
+webargs = "*"
+
+[[package]]
+category = "main"
 description = "A database migration tool for SQLAlchemy."
 name = "alembic"
 optional = false
@@ -29,6 +43,22 @@ Mako = "*"
 SQLAlchemy = ">=1.1.0"
 python-dateutil = "*"
 python-editor = ">=0.3"
+
+[[package]]
+category = "main"
+description = "A pluggable API specification generator. Currently supports the OpenAPI Specification (f.k.a. the Swagger specification)."
+name = "apispec"
+optional = false
+python-versions = ">=3.5"
+version = "3.1.0"
+
+[package.extras]
+dev = ["PyYAML (>=3.10)", "prance (>=0.11)", "marshmallow (>=2.19.2)", "pytest", "mock", "flake8 (3.7.9)", "flake8-bugbear (19.8.0)", "pre-commit (>=1.20,<2.0)", "tox"]
+docs = ["marshmallow (>=2.19.2)", "pyyaml (5.1.2)", "sphinx (2.2.1)", "sphinx-issues (1.2.0)", "sphinx-rtd-theme (0.4.3)"]
+lint = ["flake8 (3.7.9)", "flake8-bugbear (19.8.0)", "pre-commit (>=1.20,<2.0)"]
+tests = ["PyYAML (>=3.10)", "prance (>=0.11)", "marshmallow (>=2.19.2)", "pytest", "mock"]
+validation = ["prance (>=0.11)"]
+yaml = ["PyYAML (>=3.10)"]
 
 [[package]]
 category = "dev"
@@ -515,6 +545,20 @@ xdg_home = ["appdirs (>=1.4.0)"]
 
 [[package]]
 category = "main"
+description = "A very fast and expressive template engine."
+name = "jinja2"
+optional = false
+python-versions = "*"
+version = "2.10.3"
+
+[package.dependencies]
+MarkupSafe = ">=0.23"
+
+[package.extras]
+i18n = ["Babel (>=0.8)"]
+
+[[package]]
+category = "main"
 description = "A super-fast templating language that borrows the  best ideas from the existing templating languages."
 name = "mako"
 optional = false
@@ -545,6 +589,31 @@ name = "markupsafe"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 version = "1.1.1"
+
+[[package]]
+category = "main"
+description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
+name = "marshmallow"
+optional = false
+python-versions = ">=3.5"
+version = "3.2.2"
+
+[package.extras]
+dev = ["pytest", "pytz", "simplejson", "mypy (0.740)", "flake8 (3.7.9)", "flake8-bugbear (19.8.0)", "pre-commit (>=1.20,<2.0)", "tox"]
+docs = ["sphinx (2.2.1)", "sphinx-issues (1.2.0)", "alabaster (0.7.12)", "sphinx-version-warning (1.1.2)"]
+lint = ["mypy (0.740)", "flake8 (3.7.9)", "flake8-bugbear (19.8.0)", "pre-commit (>=1.20,<2.0)"]
+tests = ["pytest", "pytz", "simplejson"]
+
+[[package]]
+category = "main"
+description = "Enum field for Marshmallow"
+name = "marshmallow-enum"
+optional = false
+python-versions = "*"
+version = "1.5.1"
+
+[package.dependencies]
+marshmallow = ">=2.0.0"
 
 [[package]]
 category = "dev"
@@ -953,6 +1022,24 @@ python-versions = "*"
 version = "0.1.7"
 
 [[package]]
+category = "main"
+description = "Declarative parsing and validation of HTTP request objects, with built-in support for popular web frameworks, including Flask, Django, Bottle, Tornado, Pyramid, webapp2, Falcon, and aiohttp."
+name = "webargs"
+optional = false
+python-versions = "*"
+version = "5.5.2"
+
+[package.dependencies]
+marshmallow = ">=2.15.2"
+
+[package.extras]
+dev = ["pytest", "mock", "webtest (2.0.33)", "Flask (>=0.12.2)", "Django (>=1.11.16)", "bottle (>=0.12.13)", "tornado (>=4.5.2)", "pyramid (>=1.9.1)", "webapp2 (>=3.0.0b1)", "falcon (>=1.4.0,<2.0)", "flake8 (3.7.8)", "pre-commit (>=1.17,<2.0)", "tox", "webtest-aiohttp (2.0.0)", "pytest-aiohttp (>=0.3.0)", "aiohttp (>=3.0.0)", "mypy (0.730)", "flake8-bugbear (19.8.0)"]
+docs = ["Sphinx (2.2.0)", "sphinx-issues (1.2.0)", "sphinx-typlog-theme (0.7.3)", "Flask (>=0.12.2)", "Django (>=1.11.16)", "bottle (>=0.12.13)", "tornado (>=4.5.2)", "pyramid (>=1.9.1)", "webapp2 (>=3.0.0b1)", "falcon (>=1.4.0,<2.0)", "aiohttp (>=3.0.0)"]
+frameworks = ["Flask (>=0.12.2)", "Django (>=1.11.16)", "bottle (>=0.12.13)", "tornado (>=4.5.2)", "pyramid (>=1.9.1)", "webapp2 (>=3.0.0b1)", "falcon (>=1.4.0,<2.0)", "aiohttp (>=3.0.0)"]
+lint = ["flake8 (3.7.8)", "pre-commit (>=1.17,<2.0)", "mypy (0.730)", "flake8-bugbear (19.8.0)"]
+tests = ["pytest", "mock", "webtest (2.0.33)", "Flask (>=0.12.2)", "Django (>=1.11.16)", "bottle (>=0.12.13)", "tornado (>=4.5.2)", "pyramid (>=1.9.1)", "webapp2 (>=3.0.0b1)", "falcon (>=1.4.0,<2.0)", "webtest-aiohttp (2.0.0)", "pytest-aiohttp (>=0.3.0)", "aiohttp (>=3.0.0)"]
+
+[[package]]
 category = "dev"
 description = "The strictest and most opinionated python linter ever"
 name = "wemake-python-styleguide"
@@ -1017,7 +1104,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "250fc03cd91a51d6977dd29b92d0ad9308ebcee3e2ef65ba80d48c698ee407ab"
+content-hash = "da594356b95edd9d5340e1ae683a9d3c5002fabcffaceb8b23f2e13486721f6d"
 python-versions = "^3.7.5"
 
 [metadata.files]
@@ -1035,8 +1122,15 @@ aiohttp = [
     {file = "aiohttp-3.6.2-py3-none-any.whl", hash = "sha256:460bd4237d2dbecc3b5ed57e122992f60188afe46e7319116da5eb8a9dfedba4"},
     {file = "aiohttp-3.6.2.tar.gz", hash = "sha256:259ab809ff0727d0e834ac5e8a283dc5e3e0ecc30c4d80b3cd17a4139ce1f326"},
 ]
+aiohttp-apispec = [
+    {file = "aiohttp-apispec-2.0.0.tar.gz", hash = "sha256:71fe80afe23c9e3fd4bbc6deb2c1d8f5debbde6ea6f37ab0d7a2d0cf3bd7f1f3"},
+]
 alembic = [
     {file = "alembic-1.3.0.tar.gz", hash = "sha256:e6c6a4243e89c8d3e2342a1562b2388f3b524c9cac2fccc4d2c461a1320cc1c1"},
+]
+apispec = [
+    {file = "apispec-3.1.0-py2.py3-none-any.whl", hash = "sha256:cf8e1f3b56949710f8cf23797b7f40215e9dae8bac583789a3f2c13dc56349fa"},
+    {file = "apispec-3.1.0.tar.gz", hash = "sha256:fe5cf5fc89b1c4a73acd5af3a10ede02b31ec116f215ed02271cb905d3172367"},
 ]
 astor = [
     {file = "astor-0.8.0-py2.py3-none-any.whl", hash = "sha256:0e41295809baf43ae8303350e031aff81ae52189b6f881f36d623fa8b2f1960e"},
@@ -1242,6 +1336,10 @@ isort = [
     {file = "isort-4.3.21-py2.py3-none-any.whl", hash = "sha256:6e811fcb295968434526407adb8796944f1988c5b65e8139058f2014cbe100fd"},
     {file = "isort-4.3.21.tar.gz", hash = "sha256:54da7e92468955c4fceacd0c86bd0ec997b0e1ee80d97f67c35a78b719dccab1"},
 ]
+jinja2 = [
+    {file = "Jinja2-2.10.3-py2.py3-none-any.whl", hash = "sha256:74320bb91f31270f9551d46522e33af46a80c3d619f4a4bf42b3164d30b5911f"},
+    {file = "Jinja2-2.10.3.tar.gz", hash = "sha256:9fe95f19286cfefaa917656583d020be14e7859c6b0252588391e47db34527de"},
+]
 mako = [
     {file = "Mako-1.1.0.tar.gz", hash = "sha256:a36919599a9b7dc5d86a7a8988f23a9a3a3d083070023bab23d64f7f1d1e0a4b"},
 ]
@@ -1278,6 +1376,14 @@ markupsafe = [
     {file = "MarkupSafe-1.1.1-cp37-cp37m-win32.whl", hash = "sha256:b00c1de48212e4cc9603895652c5c410df699856a2853135b3967591e4beebc2"},
     {file = "MarkupSafe-1.1.1-cp37-cp37m-win_amd64.whl", hash = "sha256:9bf40443012702a1d2070043cb6291650a0841ece432556f784f004937f0f32c"},
     {file = "MarkupSafe-1.1.1.tar.gz", hash = "sha256:29872e92839765e546828bb7754a68c418d927cd064fd4708fab9fe9c8bb116b"},
+]
+marshmallow = [
+    {file = "marshmallow-3.2.2-py2.py3-none-any.whl", hash = "sha256:eb97c42c5928b5720812c9268865fe863d4807bc1a8b48ddd7d5c9e1779a6af0"},
+    {file = "marshmallow-3.2.2.tar.gz", hash = "sha256:1a358beb89c2b4d5555272065a9533591a3eb02f1b854f3c4002d88d8f2a1ddb"},
+]
+marshmallow-enum = [
+    {file = "marshmallow-enum-1.5.1.tar.gz", hash = "sha256:38e697e11f45a8e64b4a1e664000897c659b60aa57bfa18d44e226a9920b6e58"},
+    {file = "marshmallow_enum-1.5.1-py2.py3-none-any.whl", hash = "sha256:57161ab3dbfde4f57adeb12090f39592e992b9c86d206d02f6bd03ebec60f072"},
 ]
 mccabe = [
     {file = "mccabe-0.6.1-py2.py3-none-any.whl", hash = "sha256:ab8a6258860da4b6677da4bd2fe5dc2c659cff31b3ee4f7f5d64e79735b80d42"},
@@ -1509,6 +1615,11 @@ typing-extensions = [
 wcwidth = [
     {file = "wcwidth-0.1.7-py2.py3-none-any.whl", hash = "sha256:f4ebe71925af7b40a864553f761ed559b43544f8f71746c2d756c7fe788ade7c"},
     {file = "wcwidth-0.1.7.tar.gz", hash = "sha256:3df37372226d6e63e1b1e1eda15c594bca98a22d33a23832a90998faa96bc65e"},
+]
+webargs = [
+    {file = "webargs-5.5.2-py2-none-any.whl", hash = "sha256:3f9dc15de183d356c9a0acc159c100ea0506c0c240c1e6f1d8b308c5fed4dbbd"},
+    {file = "webargs-5.5.2-py3-none-any.whl", hash = "sha256:fa4ad3ad9b38bedd26c619264fdc50d7ae014b49186736bca851e5b5228f2a1b"},
+    {file = "webargs-5.5.2.tar.gz", hash = "sha256:3beca296598067cec24a0b6f91c0afcc19b6e3c4d84ab026b931669628bb47b4"},
 ]
 wemake-python-styleguide = [
     {file = "wemake-python-styleguide-0.12.5.tar.gz", hash = "sha256:6b915c03640aab209970e10ed2b4d66de5978ad533b30b69d7b5e2956de15eaa"},
