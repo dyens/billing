@@ -2,8 +2,10 @@ from decimal import Decimal
 
 import pytest
 
+from billing.db.exceptions import UserDoesNotExists
 from billing.db.models import (
     Currency,
+    add_to_wallet,
     create_new_user,
     user,
     wallet,
@@ -13,14 +15,15 @@ from billing.db.models import (
 class TestCreateNewUser:
     """Test create new user."""
 
-    def success_data(self):
+    @staticmethod
+    def success_data():
         """Succesed default data."""
         return {
             'name': 'Ivanov',
             'country': 'Russia',
             'city': 'Angarsk',
             'currency': Currency.EUR,
-            'balance': Decimal(0.3),  # NOQA:WPS432,
+            'balance': Decimal('0.3'),
         }
 
     @pytest.mark.asyncio
@@ -72,3 +75,76 @@ class TestCreateNewUser:
                 conn,
                 **success_data,
             )
+
+
+class TestAddToWallet:
+    """Test add to wallet."""
+
+    @pytest.fixture()
+    async def user_with_wallet(self, conn):
+        """Create user with wallet."""
+        new_user_id = await create_new_user(
+            conn,
+            **TestCreateNewUser.success_data(),
+        )
+        yield new_user_id
+
+    @pytest.mark.asyncio
+    async def test_success(self, conn, user_with_wallet):
+        """Testing success add to wallet."""
+        quantity = Decimal(2.5)
+        new_balance = await add_to_wallet(
+            conn,
+            user_id=user_with_wallet,
+            quantity=quantity,
+        )
+        assert new_balance == quantity + TestCreateNewUser.success_data(
+        )['balance']
+
+    @pytest.mark.asyncio
+    async def test_fail_wrong_user_id(self, conn, user_with_wallet):
+        """Testing failed add to wallet.
+
+        case: wrong user id
+        """
+        quantity = Decimal(2.5)
+
+        with pytest.raises(UserDoesNotExists) as exc:
+            await add_to_wallet(
+                conn,
+                user_id=2,
+                quantity=quantity,
+            )
+        assert str(exc.value) == 'User does not exist'
+
+    @pytest.mark.asyncio
+    async def test_fail_bad_quantity_type(self, conn, user_with_wallet):
+        """Testing failed add to wallet.
+
+        case: bad quantity type
+        """
+        quantity = 'Bad type'
+
+        with pytest.raises(ValueError) as exc:
+            await add_to_wallet(
+                conn,
+                user_id=1,
+                quantity=quantity,
+            )
+        assert str(exc.value) == 'Wrong type of quantity'
+
+    @pytest.mark.asyncio
+    async def test_fail_neagative_quantity(self, conn, user_with_wallet):
+        """Testing failed add to wallet.
+
+        case: negative quantity
+        """
+        quantity = Decimal('-3')
+
+        with pytest.raises(ValueError) as exc:
+            await add_to_wallet(
+                conn,
+                user_id=1,
+                quantity=quantity,
+            )
+        assert str(exc.value) == 'Quantity must be positive'

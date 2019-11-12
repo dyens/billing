@@ -6,6 +6,7 @@ from aiohttp.web_request import Request
 from aiohttp_apispec import (
     docs,
     request_schema,
+    response_schema,
 )
 from marshmallow import (
     Schema,
@@ -20,7 +21,7 @@ from billing.db.models import (
 )
 
 
-class RequestSchema(Schema):
+class UserRegisterRequestSchema(Schema):
     """Request register user schema."""
 
     name = fields.Str(description='name', required=True)
@@ -36,7 +37,7 @@ class RequestSchema(Schema):
     currency = EnumField(Currency, description='currency_type', required=True)
 
 
-class ResponseSchema(Schema):
+class UserRegisterResponseSchema(Schema):
     """Response register user schema."""
 
     new_user_id = fields.Int()
@@ -47,7 +48,8 @@ class ResponseSchema(Schema):
     summary='Create new user',
     description='New user registration',
 )
-@request_schema(RequestSchema())
+@request_schema(UserRegisterRequestSchema())
+@response_schema(UserRegisterResponseSchema())
 async def user_register(request: Request) -> Response:
     """Register new user."""
     request_data = request['data']
