@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from asyncpg.pool import PoolConnectionProxy
 from sqlalchemy import (
+    CheckConstraint,
     Column,
     DateTime,
     Enum,
@@ -15,7 +16,6 @@ from sqlalchemy import (
     String,
     Table,
     Text,
-    select,
 )
 from sqlalchemy.sql import func
 
@@ -32,6 +32,7 @@ user = Table(
 )
 
 
+@enum.unique
 class Currency(enum.Enum):
     """Available Currencies."""
 
@@ -49,9 +50,11 @@ wallet = Table(
     Column('user_id', Integer, ForeignKey('user.id')),
     Column('balance', Numeric, nullable=False, default=Decimal(0.0)),
     Column('currency', Enum(Currency), nullable=False, default=Currency.USD),
+    CheckConstraint('balance >= 0', name='positive_balance'),
 )
 
 
+@enum.unique
 class TransactionState(enum.Enum):
     """Transaction states beetwen wallets."""
 
@@ -108,6 +111,10 @@ async def create_new_user(  # NOQA:WPS211
     balance: Decimal,
 ) -> int:
     """Create new user."""
+    if not isinstance(balance, Decimal):
+        raise ValueError('Wrong type of balance')
+    if balance < 0:
+        raise ValueError('Balance bust be positive')
     async with conn.transaction():
         create_user_query = user.insert().values(
             name=name,
@@ -123,21 +130,3 @@ async def create_new_user(  # NOQA:WPS211
         )
         await conn.execute(create_wallet_query)
         return new_user_id
-
-
-async def get_users(conn: PoolConnectionProxy) -> str:
-    """Get all users."""
-    query = select([
-        user.c.id,
-    ]).select_from(user)
-    users = await conn.fetch(query)
-    return str(users)
-
-
-async def get_wallets(conn: PoolConnectionProxy) -> str:
-    """Get all wallets."""
-    query = select([
-        wallet.c.id,
-    ]).select_from(wallet)
-    wallets = await conn.fetch(query)
-    return str(wallets)

@@ -1,6 +1,8 @@
 from decimal import Decimal
 
 from aiohttp import web
+from aiohttp.web import Response
+from aiohttp.web_request import Request
 from aiohttp_apispec import (
     docs,
     request_schema,
@@ -9,6 +11,7 @@ from marshmallow import (
     Schema,
     fields,
 )
+from marshmallow.validate import Range
 from marshmallow_enum import EnumField
 
 from billing.db.models import (
@@ -23,14 +26,20 @@ class RequestSchema(Schema):
     name = fields.Str(description='name', required=True)
     country = fields.Str(description='country', required=True)
     city = fields.Str(description='city', required=True)
-    balance = fields.Int(description='balance', required=False)
+    balance = fields.Decimal(
+        description='balance',
+        required=False,
+        validate=[
+            Range(min=0, error='Negative balance.'),
+        ],
+    )
     currency = EnumField(Currency, description='currency_type', required=True)
 
 
 class ResponseSchema(Schema):
     """Response register user schema."""
 
-    msg = fields.Str()
+    new_user_id = fields.Int()
 
 
 @docs(
@@ -39,9 +48,9 @@ class ResponseSchema(Schema):
     description='New user registration',
 )
 @request_schema(RequestSchema())
-async def user_register(request):
+async def user_register(request: Request) -> Response:
     """Register new user."""
-    request_data = request['request_data']
+    request_data = request['data']
     balance = request_data.get('balance')
     if balance is None:
         balance = Decimal(0.0)
@@ -54,4 +63,4 @@ async def user_register(request):
             currency=request_data['currency'],
             balance=balance,
         )
-    return web.json_response({'msg': new_user_id})
+    return web.json_response({'new_user_id': new_user_id})

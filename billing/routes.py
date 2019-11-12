@@ -10,8 +10,7 @@ from billing.views import (
 def setup_routes(app: Application) -> None:
     """Add routes to app."""
     app.router.add_get('/', index.index, allow_head=False)
-    # TODO: add version /v1/user_register
-    app.router.add_post('/user_register', user_register.user_register)
+    app.router.add_post('/v1/user_register', user_register.user_register)
 
     setup_aiohttp_apispec(
         app=app,
