@@ -11,14 +11,14 @@ from marshmallow import (
 )
 from marshmallow.validate import Range
 
-from billing.db.exceptions import UserDoesNotExists
+from billing.db.exceptions import WalletDoesNotExists
 from billing.db.models import add_to_wallet
 
 
 class WalletTopUpRequestSchema(Schema):
     """Request wallet top up schema."""
 
-    user_id = fields.Int(description='user_id', required=True)
+    wallet_id = fields.Int(description='wallet_id', required=True)
     quantity = fields.Decimal(
         description='balance',
         required=True,
@@ -46,7 +46,7 @@ class WalletTopUpResponseSchema(Schema):
             'description': 'Success response',
         },
         404: {
-            'description': 'User not found',
+            'description': 'Wallet does not exists',
         },
         422: {
             'description': 'Validation error',
@@ -61,9 +61,9 @@ async def wallet_top_up(request: Request) -> Response:
         try:
             new_user_balance = await add_to_wallet(
                 conn,
-                user_id=request_data['user_id'],
+                wallet_id=request_data['wallet_id'],
                 quantity=request_data['quantity'],
             )
-        except UserDoesNotExists:
-            return web.HTTPNotFound(reason='User does not exists')
+        except WalletDoesNotExists:
+            return web.HTTPNotFound(reason='Wallet does not exists')
     return web.json_response({'new_balance': str(new_user_balance)})

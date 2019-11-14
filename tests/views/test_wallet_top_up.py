@@ -10,7 +10,7 @@ class TestWalletTopUp:
 
     async def test_success(self, cli, user_with_wallet):
         """Test succes wallet top up."""
-        request_data = {'user_id': 1, 'quantity': '0.21'}
+        request_data = {'wallet_id': 1, 'quantity': '0.21'}
         response = await cli.post(
             self.url,
             data=request_data,
@@ -24,7 +24,7 @@ class TestWalletTopUp:
 
     async def test_many_success(self, cli, user_with_wallet):
         """Test succes wallet top up."""
-        request_data = {'user_id': 1, 'quantity': '0.21'}
+        request_data = {'wallet_id': 1, 'quantity': '0.21'}
         await cli.post(
             self.url,
             data=request_data,
@@ -40,12 +40,12 @@ class TestWalletTopUp:
             new_wallet = await connection.fetchrow(wallet.select())
             assert new_wallet['balance'] == Decimal('0.72')
 
-    async def test_fail_bad_user_id(self, cli):
+    async def test_fail_bad_wallet_id(self, cli):
         """Testing failed wallet top up.
 
-        case: bad user id
+        case: bad wallet id
         """
-        request_data = {'user_id': 2, 'quantity': '0.21'}
+        request_data = {'wallet_id': 2, 'quantity': '0.21'}
         response = await cli.post(
             self.url,
             data=request_data,
@@ -53,14 +53,14 @@ class TestWalletTopUp:
 
         assert response.status == 404
         response_text = await response.text()
-        assert response_text == '404: User does not exists'
+        assert response_text == '404: Wallet does not exists'
 
     async def test_fail_bad_quantity_type(self, cli):
         """Testing failed wallet top up.
 
         case: bad quantity type
         """
-        request_data = {'user_id': 1, 'quantity': 'bad qunatity'}
+        request_data = {'wallet_id': 1, 'quantity': 'bad qunatity'}
         response = await cli.post(
             self.url,
             data=request_data,
@@ -75,7 +75,7 @@ class TestWalletTopUp:
 
         case: negative quantity
         """
-        request_data = {'user_id': 1, 'quantity': '-0.1'}
+        request_data = {'wallet_id': 1, 'quantity': '-0.1'}
         response = await cli.post(
             self.url,
             data=request_data,

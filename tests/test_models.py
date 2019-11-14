@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from billing.db.exceptions import UserDoesNotExists
+from billing.db.exceptions import WalletDoesNotExists
 from billing.db.models import (
     add_to_wallet,
     create_new_user,
@@ -18,11 +18,12 @@ class TestCreateNewUser:
     async def test_success(self, conn, user_with_wallet_data):
         """Testing success create new user."""
         success_data = user_with_wallet_data
-        new_user_id = await create_new_user(
+        new_user_id, new_wallet_id = await create_new_user(
             conn,
             **success_data,
         )
         assert new_user_id == 1
+        assert new_wallet_id == 1
 
         new_user = await conn.fetchrow(user.select())
         assert new_user['id'] == 1
@@ -87,26 +88,26 @@ class TestAddToWallet:
         quantity = Decimal(2.5)
         new_balance = await add_to_wallet(
             conn,
-            user_id=user_with_wallet,
+            wallet_id=user_with_wallet[1],
             quantity=quantity,
         )
         assert new_balance == quantity + user_with_wallet_data['balance']
 
     @pytest.mark.asyncio
-    async def test_fail_wrong_user_id(self, conn, user_with_wallet):
+    async def test_fail_wrong_wallet_id(self, conn, user_with_wallet):
         """Testing failed add to wallet.
 
         case: wrong user id
         """
         quantity = Decimal(2.5)
 
-        with pytest.raises(UserDoesNotExists) as exc:
+        with pytest.raises(WalletDoesNotExists) as exc:
             await add_to_wallet(
                 conn,
-                user_id=2,
+                wallet_id=2,
                 quantity=quantity,
             )
-        assert str(exc.value) == 'User does not exist'
+        assert str(exc.value) == 'Wallet does not exist'
 
     @pytest.mark.asyncio
     async def test_fail_bad_quantity_type(self, conn, user_with_wallet):
@@ -119,7 +120,7 @@ class TestAddToWallet:
         with pytest.raises(ValueError) as exc:
             await add_to_wallet(
                 conn,
-                user_id=1,
+                wallet_id=user_with_wallet[1],
                 quantity=quantity,
             )
         assert str(exc.value) == 'Wrong type of quantity'
@@ -135,7 +136,7 @@ class TestAddToWallet:
         with pytest.raises(ValueError) as exc:
             await add_to_wallet(
                 conn,
-                user_id=1,
+                wallet_id=user_with_wallet[1],
                 quantity=quantity,
             )
         assert str(exc.value) == 'Quantity must be positive'

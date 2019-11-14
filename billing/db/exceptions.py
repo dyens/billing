@@ -1,2 +1,2 @@
-class UserDoesNotExists(ValueError):
-    """User does not exists."""
+class WalletDoesNotExists(ValueError):
+    """Wallet does not exists."""

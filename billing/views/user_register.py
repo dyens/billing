@@ -41,6 +41,7 @@ class UserRegisterResponseSchema(Schema):
     """Response register user schema."""
 
     new_user_id = fields.Int()
+    new_wallet_id = fields.Int()
 
 
 @docs(
@@ -57,7 +58,7 @@ async def user_register(request: Request) -> Response:
     if balance is None:
         balance = Decimal(0.0)
     async with request.app['db'].acquire() as conn:
-        new_user_id = await create_new_user(
+        new_user_id, new_wallet_id = await create_new_user(
             conn,
             name=request_data['name'],
             country=request_data['country'],
@@ -65,4 +66,9 @@ async def user_register(request: Request) -> Response:
             currency=request_data['currency'],
             balance=balance,
         )
-    return web.json_response({'new_user_id': new_user_id})
+    return web.json_response(
+        {
+            'new_user_id': new_user_id,
+            'new_wallet_id': new_wallet_id,
+        },
+    )

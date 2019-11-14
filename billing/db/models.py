@@ -2,6 +2,7 @@
 
 import enum
 from decimal import Decimal
+from typing import Tuple
 
 from asyncpg.pool import PoolConnectionProxy
 from sqlalchemy import (
@@ -21,7 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 
-from billing.db.exceptions import UserDoesNotExists
+from billing.db.exceptions import WalletDoesNotExists
 
 metadata = MetaData()
 
@@ -149,8 +150,11 @@ async def create_new_user(  # NOQA:WPS211
     city: str,
     currency: Currency,
     balance: Decimal,
-) -> int:
-    """Create new user with wallet."""
+) -> Tuple[int, int]:
+    """Create new user with wallet.
+
+    :return: (new user_id,  new wallet_id)
+    """
     if not isinstance(balance, Decimal):
         raise ValueError('Wrong type of balance')
     if balance < 0:
@@ -167,15 +171,16 @@ async def create_new_user(  # NOQA:WPS211
             user_id=new_user_id,
             balance=balance,
             currency=currency,
-        )
-        await conn.execute(create_wallet_query)
-        return new_user_id
+        ).returning(wallet.c.id)
+        new_wallet_record = await conn.fetchrow(create_wallet_query)
+        new_wallet_id: int = new_wallet_record['id']
+        return (new_user_id, new_wallet_id)
 
 
 async def add_to_wallet(  # NOQA:WPS211
     conn: PoolConnectionProxy,
     *,
-    user_id: int,
+    wallet_id: int,
     quantity: Decimal,
 ) -> Decimal:
     """Wallet top up."""
@@ -184,13 +189,13 @@ async def add_to_wallet(  # NOQA:WPS211
     if quantity < 0:
         raise ValueError('Quantity must be positive')
     async with conn.transaction():
-        user_exists_query = select([exists().where(user.c.id == user_id)])
-        user_exists = await conn.fetchval(user_exists_query)
-        if not user_exists:
-            raise UserDoesNotExists('User does not exist')
+        wallet_exists_query = select([exists().where(wallet.c.id == wallet_id)])
+        wallet_exists = await conn.fetchval(wallet_exists_query)
+        if not wallet_exists:
+            raise WalletDoesNotExists('Wallet does not exist')
         wallet_update_query = wallet \
             .update() \
-            .where(wallet.c.user_id == user_id) \
+            .where(wallet.c.id == wallet_id) \
             .values(balance=wallet.c.balance + quantity) \
             .returning(wallet.c.balance)
         new_balance_record = await conn.fetchrow(wallet_update_query)

@@ -31,6 +31,7 @@ class TestUserRegister:
         )
         response_json = await response.json()
         assert response_json['new_user_id'] == 1
+        assert response_json['new_wallet_id'] == 1
 
         async with cli.app['db'].acquire() as connection:
             new_user = await connection.fetchrow(user.select())
@@ -54,6 +55,7 @@ class TestUserRegister:
         )
         response_json = await response.json()
         assert response_json['new_user_id'] == 1
+        assert response_json['new_wallet_id'] == 1
 
         response = await cli.post(
             self.url,
@@ -61,6 +63,7 @@ class TestUserRegister:
         )
         response_json = await response.json()
         assert response_json['new_user_id'] == 2
+        assert response_json['new_wallet_id'] == 2
 
     async def test_fail_bad_balance_type(self, cli):
         """Testing failed register user.
