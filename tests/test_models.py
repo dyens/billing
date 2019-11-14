@@ -4,7 +4,6 @@ import pytest
 
 from billing.db.exceptions import UserDoesNotExists
 from billing.db.models import (
-    Currency,
     add_to_wallet,
     create_new_user,
     user,

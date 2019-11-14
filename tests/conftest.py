@@ -59,6 +59,7 @@ def cli(loop, aiohttp_client, pg_database):
 
 @pytest.fixture
 def user_with_wallet_data():
+    """User with wallet data."""
     return {
         'name': 'Ivanov',
         'country': 'Russia',
