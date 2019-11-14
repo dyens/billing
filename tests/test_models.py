@@ -15,21 +15,10 @@ from billing.db.models import (
 class TestCreateNewUser:
     """Test create new user."""
 
-    @staticmethod
-    def success_data():
-        """Succesed default data."""
-        return {
-            'name': 'Ivanov',
-            'country': 'Russia',
-            'city': 'Angarsk',
-            'currency': Currency.EUR,
-            'balance': Decimal('0.3'),
-        }
-
     @pytest.mark.asyncio
-    async def test_success(self, conn):
+    async def test_success(self, conn, user_with_wallet_data):
         """Testing success create new user."""
-        success_data = self.success_data()
+        success_data = user_with_wallet_data
         new_user_id = await create_new_user(
             conn,
             **success_data,
@@ -49,12 +38,16 @@ class TestCreateNewUser:
         assert new_wallet['currency'] == success_data['currency'].value
 
     @pytest.mark.asyncio
-    async def test_fail_bad_balance_type(self, conn):
+    async def test_fail_bad_balance_type(
+        self,
+        conn,
+        user_with_wallet_data,
+    ):
         """Testing failed create new user.
 
         case: bad balance type
         """
-        success_data = self.success_data()
+        success_data = user_with_wallet_data
         success_data['balance'] = 'bad value'
         with pytest.raises(ValueError):
             await create_new_user(
@@ -63,12 +56,16 @@ class TestCreateNewUser:
             )
 
     @pytest.mark.asyncio
-    async def test_fail_negative_balance(self, conn):
+    async def test_fail_negative_balance(
+        self,
+        conn,
+        user_with_wallet_data,
+    ):
         """Testing failed create new user.
 
         case: balance < 0
         """
-        success_data = self.success_data()
+        success_data = user_with_wallet_data
         success_data['balance'] = Decimal('-10')
         with pytest.raises(ValueError):
             await create_new_user(
@@ -80,17 +77,13 @@ class TestCreateNewUser:
 class TestAddToWallet:
     """Test add to wallet."""
 
-    @pytest.fixture()
-    async def user_with_wallet(self, conn):
-        """Create user with wallet."""
-        new_user_id = await create_new_user(
-            conn,
-            **TestCreateNewUser.success_data(),
-        )
-        yield new_user_id
-
     @pytest.mark.asyncio
-    async def test_success(self, conn, user_with_wallet):
+    async def test_success(
+        self,
+        conn,
+        user_with_wallet,
+        user_with_wallet_data,
+    ):
         """Testing success add to wallet."""
         quantity = Decimal(2.5)
         new_balance = await add_to_wallet(
@@ -98,8 +91,7 @@ class TestAddToWallet:
             user_id=user_with_wallet,
             quantity=quantity,
         )
-        assert new_balance == quantity + TestCreateNewUser.success_data(
-        )['balance']
+        assert new_balance == quantity + user_with_wallet_data['balance']
 
     @pytest.mark.asyncio
     async def test_fail_wrong_user_id(self, conn, user_with_wallet):

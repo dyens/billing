@@ -1,8 +1,14 @@
+from decimal import Decimal
+
 import pytest
 from dynaconf import settings
 from sqlalchemy import create_engine
 
-from billing.db.models import metadata
+from billing.db.models import (
+    Currency,
+    create_new_user,
+    metadata,
+)
 from billing.db.setup import create_pool
 from main import init_app
 
@@ -49,3 +55,24 @@ def cli(loop, aiohttp_client, pg_database):
     """Aiohttp cli fixture."""
     app = init_app()
     return loop.run_until_complete(aiohttp_client(app))
+
+
+@pytest.fixture
+def user_with_wallet_data():
+    return {
+        'name': 'Ivanov',
+        'country': 'Russia',
+        'city': 'Angarsk',
+        'currency': Currency.EUR,
+        'balance': Decimal('0.3'),
+    }
+
+
+@pytest.fixture
+async def user_with_wallet(conn, user_with_wallet_data):
+    """Create user with wallet."""
+    new_user_id = await create_new_user(
+        conn,
+        **user_with_wallet_data,
+    )
+    yield new_user_id
