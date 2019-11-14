@@ -10,6 +10,8 @@ from billing.db.models import (
 class TestUserRegister:
     """Test user registration."""
 
+    url = '/v1/user_register'
+
     def default_data(self):
         """Succesed default data."""
         return {
@@ -24,7 +26,7 @@ class TestUserRegister:
         """Test succes user registration."""
         request_data = self.default_data()
         response = await cli.post(
-            '/v1/user_register',
+            self.url,
             data=request_data,
         )
         response_json = await response.json()
@@ -46,11 +48,17 @@ class TestUserRegister:
     async def test_many_success(self, cli):
         """Test succes many user registrations."""
         request_data = self.default_data()
-        response = await cli.post('/v1/user_register', data=request_data)
+        response = await cli.post(
+            self.url,
+            data=request_data,
+        )
         response_json = await response.json()
         assert response_json['new_user_id'] == 1
 
-        response = await cli.post('/v1/user_register', data=request_data)
+        response = await cli.post(
+            self.url,
+            data=request_data,
+        )
         response_json = await response.json()
         assert response_json['new_user_id'] == 2
 
@@ -61,7 +69,10 @@ class TestUserRegister:
         """
         request_data = self.default_data()
         request_data['balance'] = 'asdf'
-        response = await cli.post('/v1/user_register', data=request_data)
+        response = await cli.post(
+            self.url,
+            data=request_data,
+        )
         assert response.status == 422
         response_json = await response.json()
         assert response_json == {'balance': ['Not a valid number.']}
@@ -73,7 +84,10 @@ class TestUserRegister:
         """
         request_data = self.default_data()
         request_data['balance'] = '-1'
-        response = await cli.post('/v1/user_register', data=request_data)
+        response = await cli.post(
+            self.url,
+            data=request_data,
+        )
         assert response.status == 422
         response_json = await response.json()
         assert response_json == {'balance': ['Negative balance.']}

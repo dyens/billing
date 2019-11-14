@@ -16,8 +16,12 @@ from sqlalchemy import (
     String,
     Table,
     Text,
+    exists,
+    select,
 )
 from sqlalchemy.sql import func
+
+from billing.db.exceptions import UserDoesNotExists
 
 metadata = MetaData()
 
@@ -47,7 +51,16 @@ wallet = Table(
     'wallet',
     metadata,
     Column('id', Integer, primary_key=True),  # NOQA
-    Column('user_id', Integer, ForeignKey('user.id')),
+    Column(
+        'user_id',
+        Integer,
+        ForeignKey(
+            'user.id',
+            onupdate='CASCADE',
+            ondelete='CASCADE',
+        ),
+        nullable=False,
+    ),
     Column('balance', Numeric, nullable=False, default=Decimal(0.0)),
     Column('currency', Enum(Currency), nullable=False, default=Currency.USD),
     CheckConstraint('balance >= 0', name='positive_balance'),
@@ -79,8 +92,26 @@ transaction = Table(
     'transaction',
     metadata,
     Column('id', Integer, primary_key=True),  # NOQA
-    Column('from_wallet_id', Integer, ForeignKey('wallet.id')),
-    Column('to_wallet_id', Integer, ForeignKey('wallet.id')),
+    Column(
+        'from_wallet_id',
+        Integer,
+        ForeignKey(
+            'wallet.id',
+            onupdate='CASCADE',
+            ondelete='CASCADE',
+        ),
+        nullable=False,
+    ),
+    Column(
+        'to_wallet_id',
+        Integer,
+        ForeignKey(
+            'wallet.id',
+            onupdate='CASCADE',
+            ondelete='CASCADE',
+        ),
+        nullable=False,
+    ),
     Column('state', Enum(TransactionState), nullable=False),
     Column('amount', Numeric, nullable=False),
     Column('created_at', DateTime, nullable=False, server_default=func.now()),
@@ -94,7 +125,16 @@ transaction_log = Table(
     'transaction_log',
     metadata,
     Column('id', Integer, primary_key=True),  # NOQA
-    Column('transaction_id', Integer, ForeignKey('transaction.id')),
+    Column(
+        'transaction_id',
+        Integer,
+        ForeignKey(
+            'transaction.id',
+            onupdate='CASCADE',
+            ondelete='CASCADE',
+        ),
+        nullable=False,
+    ),
     Column('state', Enum(TransactionState), nullable=False),
     Column('comment', Text),
     Column('created_at', DateTime, nullable=False, server_default=func.now()),
@@ -110,11 +150,11 @@ async def create_new_user(  # NOQA:WPS211
     currency: Currency,
     balance: Decimal,
 ) -> int:
-    """Create new user."""
+    """Create new user with wallet."""
     if not isinstance(balance, Decimal):
         raise ValueError('Wrong type of balance')
     if balance < 0:
-        raise ValueError('Balance bust be positive')
+        raise ValueError('Balance must be positive')
     async with conn.transaction():
         create_user_query = user.insert().values(
             name=name,
@@ -130,3 +170,29 @@ async def create_new_user(  # NOQA:WPS211
         )
         await conn.execute(create_wallet_query)
         return new_user_id
+
+
+async def add_to_wallet(  # NOQA:WPS211
+    conn: PoolConnectionProxy,
+    *,
+    user_id: int,
+    quantity: Decimal,
+) -> Decimal:
+    """Wallet top up."""
+    if not isinstance(quantity, Decimal):
+        raise ValueError('Wrong type of quantity')
+    if quantity < 0:
+        raise ValueError('Quantity must be positive')
+    async with conn.transaction():
+        user_exists_query = select([exists().where(user.c.id == user_id)])
+        user_exists = await conn.fetchval(user_exists_query)
+        if not user_exists:
+            raise UserDoesNotExists('User does not exist')
+        wallet_update_query = wallet \
+            .update() \
+            .where(wallet.c.user_id == user_id) \
+            .values(balance=wallet.c.balance + quantity) \
+            .returning(wallet.c.balance)
+        new_balance_record = await conn.fetchrow(wallet_update_query)
+        new_balance: Decimal = new_balance_record['balance']
+        return new_balance  # NOQA:WPS331
