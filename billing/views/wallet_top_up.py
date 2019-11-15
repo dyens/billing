@@ -1,4 +1,5 @@
 from contextlib import AsyncExitStack
+
 from aiohttp import web
 from aiohttp.web import Response
 from aiohttp.web_request import Request
@@ -13,7 +14,7 @@ from marshmallow import (
 from marshmallow.validate import Range
 
 from billing.db.exceptions import WalletDoesNotExists
-from billing.db.models import add_to_wallet
+from billing.db.wallet import add_to_wallet
 
 
 class WalletTopUpRequestSchema(Schema):
@@ -59,7 +60,9 @@ async def wallet_top_up(request: Request) -> Response:
     """Wallet top up."""
     request_data = request['data']
     async with AsyncExitStack() as with_stack:
-        conn = await with_stack.enter_async_context(request.app['db'].acquire())
+        conn = await with_stack.enter_async_context(
+            request.app['db'].acquire(),
+        )
         await with_stack.enter_async_context(conn.transaction())
         try:
             new_user_balance = await add_to_wallet(

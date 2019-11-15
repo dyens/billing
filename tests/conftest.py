@@ -6,11 +6,11 @@ from sqlalchemy import create_engine
 
 from billing.db.models import (
     Currency,
-    create_new_user,
-    create_transaction,
     metadata,
 )
 from billing.db.setup import create_pool
+from billing.db.transaction import create_transaction
+from billing.db.user import create_new_user
 from main import init_app
 
 
@@ -84,7 +84,7 @@ def user2_with_wallet_data():
 
 @pytest.fixture
 async def user_with_wallet(conn, user_with_wallet_data):
-    """Created user1 with wallet fixture."""
+    """Create user1 with wallet fixture."""
     new_user_id = await create_new_user(
         conn,
         **user_with_wallet_data,
@@ -94,7 +94,7 @@ async def user_with_wallet(conn, user_with_wallet_data):
 
 @pytest.fixture
 async def user2_with_wallet(conn, user2_with_wallet_data):
-    """Created user2 with wallet fixture."""
+    """Create user2 with wallet fixture."""
     new_user_id = await create_new_user(
         conn,
         **user2_with_wallet_data,

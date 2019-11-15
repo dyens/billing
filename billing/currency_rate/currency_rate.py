@@ -1,11 +1,10 @@
 """Currency rate adapter."""
 
+import asyncio
 import random
 from decimal import Decimal
 
-
 from dynaconf import settings
-import asyncio
 
 
 async def get_currency_rate(currency_name: str) -> Decimal:
@@ -19,7 +18,7 @@ async def get_currency_rate(currency_name: str) -> Decimal:
     # For transfer state system we need emulate api delay.
     # For testing we dont want wait sleeping time.
     if settings.TESTING is False:
-        await asyncio.sleep(random.uniform(1, 5))
+        await asyncio.sleep(random.uniform(1, 5))  # NOQA:S311
 
     # default currency rates
     default_currencies = {
@@ -38,5 +37,4 @@ async def get_currency_rate(currency_name: str) -> Decimal:
     default_currency = default_currencies[currency_name]
 
     currency = default_currency * random.uniform(1.0, 1.05)  # NOQA:S311
-    print(currency, currency_name)
     return Decimal(currency)
