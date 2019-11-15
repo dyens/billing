@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  billing_db:
+    image: postgres:latest
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_PASSWORD: pgpass
+      POSTGRES_USER: pguser
+      POSTGRES_DB: pgdb
+    volumes:
+      - billing_db_volume:/var/lib/postgresql/data
+    networks:
+      - billing
+
+  billing_api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ENV_FOR_DYNACONF: "compose"
+    command: ["./scripts/run-in-compose.sh"]
+    networks:
+      - billing
+    depends_on:
+      - billing_db
+    volumes:
+      - .:/opt/project
+    networks:
+      - billing
+ 
+
+networks:
+  billing:
+
+volumes:
+  billing_db_volume:
