@@ -6,7 +6,10 @@ from billing.db.models import (
     user,
     wallet,
 )
-from billing.db.user import create_new_user
+from billing.db.user import (
+    create_new_user,
+    get_user_info,
+)
 
 
 class TestCreateNewUser:
@@ -52,3 +55,34 @@ class TestCreateNewUser:
                 conn,
                 **success_data,
             )
+
+
+class TestGetUserInfo:
+    """Test get user info."""
+
+    @pytest.mark.asyncio
+    async def test_success(
+        self,
+        conn,
+        user_with_wallet,
+    ):
+        """Testing success user info."""
+        user_info = await get_user_info(conn, user_id=1)
+        assert user_info['name'] == 'Ivanov'
+        assert user_info['city'] == 'Angarsk'
+        assert user_info['country'] == 'Russia'
+        assert user_info['balance'] == Decimal('0.3')
+        assert user_info['currency'] == 'EUR'
+
+    @pytest.mark.asyncio
+    async def test_fail_unknown_user(
+        self,
+        conn,
+        user_with_wallet,
+    ):
+        """Testing fail.
+
+        Case: unknow user
+        """
+        with pytest.raises(ValueError):
+            await get_user_info(conn, user_id=5)
