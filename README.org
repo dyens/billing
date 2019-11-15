@@ -1,0 +1,128 @@
+Billing app
+
+* Install
+** Docker
+   Приложение можно запустить с помошью Docker-compose
+   Для этого достаточно выполнить в корне проекта
+     #+BEGIN_SRC sh
+     docker-compose up
+     #+END_SRC
+   В этом случае произойдет сборка контейнера, запустится postgresql, и приложение на порту 8080
+
+** Poetry
+  Можно использовать virtualenv/poetry для запуска и тестирования приложения. 
+  В системе дожны быть установлены poetry, python 3.7.5 (pyenv)
+
+  Для запуска приложения сначала нужно установить зависимости в виртуальное окружения
+    #+BEGIN_SRC sh
+    poetry install
+    #+END_SRC
+
+  Запустить базу даных
+    #+BEGIN_SRC sh
+    make deps
+    #+END_SRC
+
+  Затем
+    #+BEGIN_SRC sh
+    make run # или poetry run python main.py
+    #+END_SRC
+    
+* Configuration
+  Для конфигурирования приложения используется dynaconf
+  Настройки хрянятся в .secrets.toml (Так сделано только для удобства режима demo !)
+  Makefile и docker-compose.yml - соотвествуют дефолтным настройкам.
+  Если планируется менять .secrets.toml, то и Makefile, docker-compose.yml - следует тоже изменить.
+* Quickstart
+  После установки и конфигурирования приложения, предпологается что запущен сервис на 127.0.0.1:8080
+
+  Создадим два пользователя (currency_user1 = EUR, currency_user2 = CNY):
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/user_register" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"country\": \"country1\",  \"city\": \"city1\",  \"name\": \"user1\",  \"balance\": 100,  \"currency\": \"EUR\"}"
+  curl -X POST "http://127.0.0.1:8080/v1/user_register" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"country\": \"country2\",  \"city\": \"city2\",  \"name\": \"user2\",  \"balance\": 100,  \"currency\": \"CNY\"}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"new_user_id": 1, "new_wallet_id": 1}{"new_user_id": 2, "new_wallet_id": 2}
+
+  Их user_id и wallet_id буду равны (1, 1), (2, 2) cоотвественно
+
+  Посмотрм информцию первого пользователя
+
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/user_info" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"user_id\": 1}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"name": "user1", "city": "city1", "country": "country1", "balance": "100", "currency": "EUR"}
+
+
+  Добавим первому пользователю денег на кошелек
+
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/wallet_top_up" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"wallet_id\": 1,  \"amount\": 10}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"new_balance": "110"}
+
+
+  Переведем с кошелька второго пользователя на кошелек первого 10 CNY
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/transaction_between_wallets" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"to_wallet_id\": 1,  \"from_wallet_id\": 2,  \"amount\": 10}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"msg": "Transaction created"}
+  
+  Создалась транзакция. Но она не происходит мгновенно. В данном демо эмулируется задерка получения accuracy rate к USD
+
+  Подожем секунд 5-10
+
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/transactions_history" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"wallet_id\": 1}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"history": [{"from_wallet_id": 2, "to_wallet_id": 1, "amount": "10", "created_at": "2019-11-15 18:20:27.885790", "state": "SUCCESED", "new_balance": "111.272727272727272704828823041", "transaction_id": 1}]}
+  
+  Можно запускать данный запрос c параметрами start, end для фильтрации транзакций.
+
+  Попробуем теперь перевести с кошелька второго пользователя на кошелек первого 1000 CNY.
+  Данная транзакция не должна пройти..
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/transaction_between_wallets" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"to_wallet_id\": 1,  \"from_wallet_id\": 2,  \"amount\": 1000}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"msg": "Transaction created"}
+
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/transactions_history" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"wallet_id\": 1}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"history": [{"from_wallet_id": 2, "to_wallet_id": 1, "amount": "10", "created_at": "2019-11-15 18:20:27.885790", "state": "SUCCESED", "new_balance": "111.272727272727272704828823041", "transaction_id": 1}, {"from_wallet_id": 2, "to_wallet_id": 1, "amount": "1000", "created_at": "2019-11-15 18:21:08.359352", "state": "FAILED", "new_balance": "None", "transaction_id": 2}]}
+
+  Видим, что в результатах появилась Failed транзакция
+  
+  Можно посмотерть транзакции относительно другого кошелька. В результате данного запроса поле new_balace будет пересчитываться относильно данного кошелькаю.
+  #+BEGIN_SRC sh :results output
+  curl -X POST "http://127.0.0.1:8080/v1/transactions_history" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"wallet_id\": 2}"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"history": [{"from_wallet_id": 2, "to_wallet_id": 1, "amount": "10", "created_at": "2019-11-15 18:20:27.885790", "state": "SUCCESED", "new_balance": "90", "transaction_id": 1}, {"from_wallet_id": 2, "to_wallet_id": 1, "amount": "1000", "created_at": "2019-11-15 18:21:08.359352", "state": "FAILED", "new_balance": "None", "transaction_id": 2}]}
+
+  Ну и на последок, можно узнать информацию про этапы конкретной транзакции
+  #+BEGIN_SRC sh :results output
+  curl -X GET "http://127.0.0.1:8080/v1/transaction_logs/1" -H  "accept: application/json"
+  #+END_SRC
+
+  #+RESULTS:
+  : {"logs": [{"state": "CREATED", "comment": "Transaction created", "created_at": "2019-11-15 18:20:27.885790"}, {"state": "SUCCESED", "comment": "Success", "created_at": "2019-11-15 18:20:27.885790"}]}
+ 
+   
+** Swagger
+   Swager.json хранится по адресу http://127.0.0.1:8080/api/docs/swagger.json
+   Swagger doc хранится по адресу http://127.0.0.1:8080/api/docs
