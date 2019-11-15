@@ -120,6 +120,8 @@ class TestSuccessTransaction:
             exchange_from_rate=Decimal('0.1'),
             exchange_to_rate=Decimal('0.2'),
             comment='Success reason',
+            new_balance_from=Decimal('0.3'),
+            new_balance_to=Decimal('0.4'),
         )
 
         transaction_info = await conn.fetchrow(transaction.select())
@@ -129,6 +131,8 @@ class TestSuccessTransaction:
         assert transaction_info['amount'] == Decimal('0.1')
         assert transaction_info['exchange_from_rate'] == Decimal('0.1')
         assert transaction_info['exchange_to_rate'] == Decimal('0.2')
+        assert transaction_info['new_balance_from'] == Decimal('0.3')
+        assert transaction_info['new_balance_to'] == Decimal('0.4')
         assert transaction_info['failed_reason'] is None
         logs = list(await conn.fetch(transaction_log.select()))
         # First log is creation log
