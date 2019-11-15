@@ -1,4 +1,6 @@
+from datetime import datetime
 from decimal import Decimal
+from typing import Optional
 
 from asyncpg.pool import PoolConnectionProxy
 from sqlalchemy import select
@@ -94,6 +96,8 @@ async def success_transaction(
     transaction_id: int,
     exchange_from_rate: Decimal,
     exchange_to_rate: Decimal,
+    new_balance_from: Decimal,
+    new_balance_to: Decimal,
     comment: str,
 ):
     """Set transaction to success."""
@@ -110,6 +114,8 @@ async def success_transaction(
         .values(
             exchange_from_rate=exchange_from_rate,
             exchange_to_rate=exchange_to_rate,
+            new_balance_from=new_balance_from,
+            new_balance_to=new_balance_to,
             state=TransactionState.SUCCESED,
         )
     await conn.execute(update_transaction_query)
@@ -208,12 +214,12 @@ async def transfer_between_wallets(  # NOQA:WPS211
         add_amount = amount * exchange_from_rate / exchange_to_rate
 
         # 5. Transfer money
-        await get_from_wallet(
+        new_balance_from = await get_from_wallet(
             conn,
             wallet_id=from_wallet_id,
             amount=amount,
         )
-        await add_to_wallet(
+        new_balance_to = await add_to_wallet(
             conn,
             wallet_id=to_wallet_id,
             amount=add_amount,
@@ -225,5 +231,88 @@ async def transfer_between_wallets(  # NOQA:WPS211
             transaction_id=transaction_id,
             exchange_from_rate=exchange_from_rate,
             exchange_to_rate=exchange_to_rate,
+            new_balance_from=new_balance_from,
+            new_balance_to=new_balance_to,
             comment='Success',
         )
+
+
+async def transfers_history(  # NOQA:WPS211
+    conn: PoolConnectionProxy,
+    *,
+    wallet_id: int,
+    start: Optional[datetime] = None,
+    end: Optional[datetime] = None,
+):
+    """Transactions histroy."""
+    transaction_hist_query = select(
+        [
+            transaction.c.id,
+            transaction.c.from_wallet_id,
+            transaction.c.to_wallet_id,
+            transaction.c.amount,
+            transaction.c.created_at,
+            transaction.c.state,
+            transaction.c.new_balance_from,
+            transaction.c.new_balance_to,
+        ],
+    ).select_from(
+        transaction,
+    ).where(
+        (transaction.c.from_wallet_id == wallet_id) |
+        (transaction.c.to_wallet_id == wallet_id),
+    )
+    if start is not None:
+        transaction_hist_query = transaction_hist_query.where(
+            transaction.c.created_at >= start.replace(tzinfo=None),
+        )
+
+    if end is not None:
+        transaction_hist_query = transaction_hist_query.where(
+            transaction.c.created_at <= end.replace(tzinfo=None),
+        )
+    transaction_info_records = await conn.fetch(transaction_hist_query)
+
+    history = []
+    for record in transaction_info_records:
+        record_dict = dict(record)
+        from_wallet_id = record_dict['from_wallet_id']
+        new_balance_from = record_dict.pop('new_balance_from')
+        new_balance_to = record_dict.pop('new_balance_to')
+
+        if from_wallet_id == wallet_id:
+            new_balance = str(new_balance_from)
+        else:
+            new_balance = str(new_balance_to)
+        record_dict['new_balance'] = new_balance
+        record_dict['amount'] = str(record_dict['amount'])
+        record_dict['created_at'] = str(record_dict['created_at'])
+        record_dict['transaction_id'] = record_dict.pop('id')
+        history.append(record_dict)
+    return history
+
+
+async def get_transaction_logs(  # NOQA:WPS211
+    conn: PoolConnectionProxy,
+    *,
+    transaction_id: int,
+):
+    """Transaction logs."""
+    transaction_log_query = select(
+        [
+            transaction_log.c.state,
+            transaction_log.c.comment,
+            transaction_log.c.created_at,
+        ],
+    ).select_from(transaction_log).where(
+        transaction_log.c.transaction_id == transaction_id,
+    )
+
+    transaction_log_records = await conn.fetch(transaction_log_query)
+
+    logs = []
+    for record in transaction_log_records:
+        record_dict = dict(record)
+        record_dict['created_at'] = str(record_dict['created_at'])
+        logs.append(record_dict)
+    return logs

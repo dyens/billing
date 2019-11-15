@@ -117,6 +117,9 @@ transaction = Table(
         server_default=func.now(),
         onupdate=func.now(),
     ),
+
+    Column('new_balance_from', Numeric),
+    Column('new_balance_to', Numeric),
     Column('exchange_from_rate', Numeric),
     Column('exchange_to_rate', Numeric),
     Column('failed_reason', Enum(FailedReason)),
