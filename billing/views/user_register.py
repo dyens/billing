@@ -1,3 +1,4 @@
+from contextlib import AsyncExitStack
 from decimal import Decimal
 
 from aiohttp import web
@@ -15,10 +16,8 @@ from marshmallow import (
 from marshmallow.validate import Range
 from marshmallow_enum import EnumField
 
-from billing.db.models import (
-    Currency,
-    create_new_user,
-)
+from billing.db.models import Currency
+from billing.db.user import create_new_user
 
 
 class UserRegisterRequestSchema(Schema):
@@ -57,7 +56,12 @@ async def user_register(request: Request) -> Response:
     balance = request_data.get('balance')
     if balance is None:
         balance = Decimal(0.0)
-    async with request.app['db'].acquire() as conn:
+
+    async with AsyncExitStack() as with_stack:
+        conn = await with_stack.enter_async_context(
+            request.app['db'].acquire(),
+        )
+        await with_stack.enter_async_context(conn.transaction())
         new_user_id, new_wallet_id = await create_new_user(
             conn,
             name=request_data['name'],

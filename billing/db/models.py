@@ -2,9 +2,7 @@
 
 import enum
 from decimal import Decimal
-from typing import Tuple
 
-from asyncpg.pool import PoolConnectionProxy
 from sqlalchemy import (
     CheckConstraint,
     Column,
@@ -17,12 +15,8 @@ from sqlalchemy import (
     String,
     Table,
     Text,
-    exists,
-    select,
 )
 from sqlalchemy.sql import func
-
-from billing.db.exceptions import WalletDoesNotExists
 
 metadata = MetaData()
 
@@ -116,8 +110,15 @@ transaction = Table(
     Column('state', Enum(TransactionState), nullable=False),
     Column('amount', Numeric, nullable=False),
     Column('created_at', DateTime, nullable=False, server_default=func.now()),
-    Column('updated_at', DateTime, nullable=False, onupdate=func.now()),
-    Column('exchange_rate', Numeric),
+    Column(
+        'updated_at',
+        DateTime,
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    ),
+    Column('exchange_from_rate', Numeric),
+    Column('exchange_to_rate', Numeric),
     Column('failed_reason', Enum(FailedReason)),
 )
 
@@ -140,64 +141,3 @@ transaction_log = Table(
     Column('comment', Text),
     Column('created_at', DateTime, nullable=False, server_default=func.now()),
 )
-
-
-async def create_new_user(  # NOQA:WPS211
-    conn: PoolConnectionProxy,
-    *,
-    name: str,
-    country: str,
-    city: str,
-    currency: Currency,
-    balance: Decimal,
-) -> Tuple[int, int]:
-    """Create new user with wallet.
-
-    :return: (new user_id,  new wallet_id)
-    """
-    if not isinstance(balance, Decimal):
-        raise ValueError('Wrong type of balance')
-    if balance < 0:
-        raise ValueError('Balance must be positive')
-    async with conn.transaction():
-        create_user_query = user.insert().values(
-            name=name,
-            country=country,
-            city=city,
-        ).returning(user.c.id)
-        new_user_record = await conn.fetchrow(create_user_query)
-        new_user_id: int = new_user_record['id']
-        create_wallet_query = wallet.insert().values(
-            user_id=new_user_id,
-            balance=balance,
-            currency=currency,
-        ).returning(wallet.c.id)
-        new_wallet_record = await conn.fetchrow(create_wallet_query)
-        new_wallet_id: int = new_wallet_record['id']
-        return (new_user_id, new_wallet_id)
-
-
-async def add_to_wallet(  # NOQA:WPS211
-    conn: PoolConnectionProxy,
-    *,
-    wallet_id: int,
-    quantity: Decimal,
-) -> Decimal:
-    """Wallet top up."""
-    if not isinstance(quantity, Decimal):
-        raise ValueError('Wrong type of quantity')
-    if quantity < 0:
-        raise ValueError('Quantity must be positive')
-    async with conn.transaction():
-        wallet_exists_query = select([exists().where(wallet.c.id == wallet_id)])
-        wallet_exists = await conn.fetchval(wallet_exists_query)
-        if not wallet_exists:
-            raise WalletDoesNotExists('Wallet does not exist')
-        wallet_update_query = wallet \
-            .update() \
-            .where(wallet.c.id == wallet_id) \
-            .values(balance=wallet.c.balance + quantity) \
-            .returning(wallet.c.balance)
-        new_balance_record = await conn.fetchrow(wallet_update_query)
-        new_balance: Decimal = new_balance_record['balance']
-        return new_balance  # NOQA:WPS331

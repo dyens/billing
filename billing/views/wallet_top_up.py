@@ -1,3 +1,5 @@
+from contextlib import AsyncExitStack
+
 from aiohttp import web
 from aiohttp.web import Response
 from aiohttp.web_request import Request
@@ -12,18 +14,18 @@ from marshmallow import (
 from marshmallow.validate import Range
 
 from billing.db.exceptions import WalletDoesNotExists
-from billing.db.models import add_to_wallet
+from billing.db.wallet import add_to_wallet
 
 
 class WalletTopUpRequestSchema(Schema):
     """Request wallet top up schema."""
 
     wallet_id = fields.Int(description='wallet_id', required=True)
-    quantity = fields.Decimal(
-        description='balance',
+    amount = fields.Decimal(
+        description='amount',
         required=True,
         validate=[
-            Range(min=0, error='Negative quantity.'),
+            Range(min=0, error='Negative amount.'),
         ],
     )
 
@@ -57,12 +59,16 @@ class WalletTopUpResponseSchema(Schema):
 async def wallet_top_up(request: Request) -> Response:
     """Wallet top up."""
     request_data = request['data']
-    async with request.app['db'].acquire() as conn:
+    async with AsyncExitStack() as with_stack:
+        conn = await with_stack.enter_async_context(
+            request.app['db'].acquire(),
+        )
+        await with_stack.enter_async_context(conn.transaction())
         try:
             new_user_balance = await add_to_wallet(
                 conn,
                 wallet_id=request_data['wallet_id'],
-                quantity=request_data['quantity'],
+                amount=request_data['amount'],
             )
         except WalletDoesNotExists:
             return web.HTTPNotFound(reason='Wallet does not exists')

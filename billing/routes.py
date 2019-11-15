@@ -3,6 +3,7 @@ from aiohttp_apispec import setup_aiohttp_apispec
 
 from billing.views import (
     index,
+    transaction_between_wallets,
     user_register,
     wallet_top_up,
 )
@@ -13,6 +14,10 @@ def setup_routes(app: Application) -> None:
     app.router.add_get('/', index.index, allow_head=False)
     app.router.add_post('/v1/user_register', user_register.user_register)
     app.router.add_post('/v1/wallet_top_up', wallet_top_up.wallet_top_up)
+    app.router.add_post(
+        '/v1/transaction_between_wallets',
+        transaction_between_wallets.transaction_between_wallets,
+    )
 
     setup_aiohttp_apispec(
         app=app,

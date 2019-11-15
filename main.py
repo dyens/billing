@@ -1,6 +1,7 @@
 from aiohttp import web
 from aiohttp.web_app import Application
 from aiohttp_apispec import validation_middleware
+from aiojobs.aiohttp import setup
 from dynaconf import settings
 
 from billing.db.setup import (
@@ -19,6 +20,9 @@ def init_app() -> Application:
     # setup views and routes
     setup_routes(app)
     app.middlewares.append(validation_middleware)
+
+    # setup aiojobs
+    setup(app)
     return app
 
 
