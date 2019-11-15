@@ -22,7 +22,7 @@ class WalletTopUpRequestSchema(Schema):
 
     wallet_id = fields.Int(description='wallet_id', required=True)
     amount = fields.Decimal(
-        description='balance',
+        description='amount',
         required=True,
         validate=[
             Range(min=0, error='Negative amount.'),
