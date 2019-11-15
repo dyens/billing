@@ -8,7 +8,7 @@ from billing.db.setup import (
     init_pg,
 )
 from billing.routes import setup_routes
-
+from aiojobs.aiohttp import setup
 
 def init_app() -> Application:
     """Init app."""
@@ -19,6 +19,10 @@ def init_app() -> Application:
     # setup views and routes
     setup_routes(app)
     app.middlewares.append(validation_middleware)
+
+
+    # setup aiojobs
+    setup(app)
     return app
 
 
