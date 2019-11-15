@@ -2,6 +2,7 @@ from decimal import Decimal
 from typing import Tuple
 
 from asyncpg.pool import PoolConnectionProxy
+from sqlalchemy import select
 
 from billing.db.models import (
     Currency,
@@ -40,3 +41,35 @@ async def create_new_user(  # NOQA:WPS211
     new_wallet_record = await conn.fetchrow(create_wallet_query)
     new_wallet_id: int = new_wallet_record['id']
     return (new_user_id, new_wallet_id)
+
+
+async def get_user_info(  # NOQA:WPS211
+    conn: PoolConnectionProxy,
+    *,
+    user_id: int,
+):
+    """User info."""
+    user_info_query = select(
+        [
+            user.c.name,
+            user.c.country,
+            user.c.city,
+            wallet.c.balance,
+            wallet.c.currency,
+        ],
+    ).select_from(
+        user.join(wallet),
+    ).where(
+        user.c.id == user_id,
+    )
+
+    user_info_record = await conn.fetchrow(user_info_query)
+    if user_info_record is None:
+        raise ValueError('Unknown user.')
+    return {
+        'name': user_info_record['name'],
+        'city': user_info_record['city'],
+        'country': user_info_record['country'],
+        'balance': user_info_record['balance'],
+        'currency': user_info_record['currency'],
+    }
